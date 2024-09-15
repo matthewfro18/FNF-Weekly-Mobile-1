@@ -16,6 +16,7 @@ import openfl.events.Event;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
 import openfl.display.StageScaleMode;
+import lime.system.System;
 import meta.states.*;
 import meta.data.*;
 import meta.CompilationStuff;
