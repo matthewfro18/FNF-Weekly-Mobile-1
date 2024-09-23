@@ -48,19 +48,15 @@ jobs:
           haxelib git hxdiscord_rpc https://github.com/MAJigsaw77/hxdiscord_rpc 3538a1c2bb07b04208cd014220207f8173acdb21 --quiet
       
       - name: Compile (Windows)
-        if: startsWith(matrix.os, 'windows')
         run: haxelib run lime build windows -D officialBuild
 
       - name: Compile (Linux)
-        if: startsWith(matrix.os, 'ubuntu')
         run: haxelib run lime build linux -D officialBuild
 
       - name: Compile (macOS)
-        if: startsWith(matrix.os, 'macos')
         run: haxelib run lime build mac -D officialBuild
 
       - name: Upload Artifact (Windows)
-        if: startsWith(matrix.os, 'windows')
         uses: actions/upload-artifact@main
         with:
           name: windowsBuild
@@ -68,7 +64,6 @@ jobs:
           if-no-files-found: error
 
       - name: Upload Artifact (Linux)
-        if: startsWith(matrix.os, 'ubuntu')
         uses: actions/upload-artifact@main
         with:
           name: linuxBuild
@@ -76,7 +71,6 @@ jobs:
           if-no-files-found: error
 
       - name: Upload Artifact (macOS 12)
-        if: matrix.os == 'macos-12'
         uses: actions/upload-artifact@main
         with:
           name: macOSBuild-x86_64
@@ -84,7 +78,6 @@ jobs:
           if-no-files-found: error
 
       - name: Upload Artifact (macOS 14)
-        if: matrix.os == 'macos-14'
         uses: actions/upload-artifact@main
         with:
           name: macOSBuild-arm64
@@ -133,11 +126,9 @@ jobs:
           haxelib run lime config JAVA_HOME $JAVA_HOME_17_X64
           haxelib run lime config ANDROID_SETUP true
       - name: Compile (Android)
-        if: startsWith(matrix.os, 'ubuntu')
         run: haxelib run lime build android -ONLY_ARMV7 -D officialBuild
 
       - name: Compile (iOS)
-        if: startsWith(matrix.os, 'macos')
         run: haxelib run lime build ios -nosign -D officialBuild
 
       - name: Make Ipa
