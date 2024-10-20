@@ -409,6 +409,8 @@ class PlayState extends MusicBeatState
 
 	public static var metadata:Null<MetadataFile>;
 
+	public var luaTouchPad:TouchPad;
+
 	// for hscripts, cant think of another way for it to work
 	override function add(Object:FlxBasic):FlxBasic { return super.add(Object); } 
 	override public function insert(position:Int, object:FlxBasic):FlxBasic { return super.insert(position, object);}
@@ -1255,6 +1257,11 @@ class PlayState extends MusicBeatState
 		splash.alpha = 0.0;
 		// startCountdown();
 
+		#if !android
+		addTouchPad('NONE', 'P');
+         	addTouchPadCamera();
+		#end
+
 		generateSong(SONG.song);
 		modManager = new ModManager(this);
 		hscriptSetDefault("modManager", modManager);
@@ -1436,11 +1443,9 @@ class PlayState extends MusicBeatState
 		if (hasMetadata) card.cameras = [camOther];
 		topBar.cameras = [camOther];
 		bottomBar.cameras = [camOther];
-		
-		#if mobile
+
                 addMobileControls(false);
                 mobileControls.visible = false;
-                #end
 
 		setOnScripts('playFields', playFields);
 		setOnScripts('grpNoteSplashes', grpNoteSplashes);
@@ -3247,11 +3252,18 @@ class PlayState extends MusicBeatState
 		setOnHScripts('curStep', curStep);
 		setOnHScripts('curBeat', curBeat);
 
-
-		// if(botplayTxt.visible) {
-		// 	botplaySine += 180 * elapsed;
-		// 	botplayTxt.alpha = 1 - Math.sin((Math.PI * botplaySine) / 180);
-		// }
+		if(botplayTxt.visible) {
+			botplaySine += 180 * elapsed;
+			botplayTxt.alpha = 1 - Math.sin((Math.PI * botplaySine) / 180);
+		}
+		
+		if ((controls.PAUSE #if android || FlxG.android.justReleased.BACK #else || touchPad.buttonP.justPressed #end) && (startedCountdown && canPause))
+		{
+			var ret:Dynamic = callOnScripts('onPause', null, true);
+			if(ret != LuaUtils.Function_Stop) {
+				openPauseMenu();
+			}
+		}
 
 		if (controls.PAUSE #if android || FlxG.android.justReleased.BACK #end && startedCountdown && canPause)
 		{
@@ -4396,6 +4408,7 @@ class PlayState extends MusicBeatState
 	public var transitioning = false;
 	public function endSong():Void
 	{
+		mobileControls.visible = #if !android touchPad.visible = #end false;
 		//Should kill you if you tried to cheat
 		if(!startingSong) {
 			notes.forEach(function(daNote:Note) {
@@ -5887,6 +5900,85 @@ class PlayState extends MusicBeatState
 		return null;
 	}
 	#end
+
+	public function makeLuaTouchPad(DPadMode:String, ActionMode:String) {
+		if(members.contains(luaTouchPad)) return;
+
+		if(!variables.exists("luaTouchPad"))
+			variables.set("luaTouchPad", luaTouchPad);
+
+		luaTouchPad = new TouchPad(DPadMode, ActionMode, NONE);
+		luaTouchPad.alpha = ClientPrefs.data.controlsAlpha;
+	}
+	
+	public function addLuaTouchPad() {
+		if(luaTouchPad == null || members.contains(luaTouchPad)) return;
+
+		var target = LuaUtils.getTargetInstance();
+		target.insert(target.members.length + 1, luaTouchPad);
+	}
+
+	public function addLuaTouchPadCamera() {
+		if(luaTouchPad != null)
+			luaTouchPad.cameras = [luaVpadCam];
+	}
+
+	public function removeLuaTouchPad() {
+		if (luaTouchPad != null) {
+			luaTouchPad.kill();
+			luaTouchPad.destroy();
+			remove(luaTouchPad);
+			luaTouchPad = null;
+		}
+	}
+
+	public function luaTouchPadPressed(button:Dynamic):Bool {
+		if(luaTouchPad != null) {
+			if(Std.isOfType(button, String))
+				return luaTouchPad.buttonPressed(MobileInputID.fromString(button));
+			else if(Std.isOfType(button, Array)){
+				var FUCK:Array<String> = button; // haxe said "You Can't Iterate On A Dyanmic Value Please Specificy Iterator or Iterable *insert nerd emoji*" so that's the only i foud to fix
+				var idArray:Array<MobileInputID> = [];
+				for(strId in FUCK)
+					idArray.push(MobileInputID.fromString(strId));
+				return luaTouchPad.anyPressed(idArray);
+			} else
+				return false;
+		}
+		return false;
+	}
+
+	public function luaTouchPadJustPressed(button:Dynamic):Bool {
+		if(luaTouchPad != null) {
+			if(Std.isOfType(button, String))
+				return luaTouchPad.buttonJustPressed(MobileInputID.fromString(button));
+			else if(Std.isOfType(button, Array)){
+				var FUCK:Array<String> = button;
+				var idArray:Array<MobileInputID> = [];
+				for(strId in FUCK)
+					idArray.push(MobileInputID.fromString(strId));
+				return luaTouchPad.anyJustPressed(idArray);
+			} else
+				return false;
+		}
+		return false;
+	}
+	
+	public function luaTouchPadJustReleased(button:Dynamic):Bool {
+		if(luaTouchPad != null) {
+			if(Std.isOfType(button, String))
+				return luaTouchPad.buttonJustReleased(MobileInputID.fromString(button));
+			else if(Std.isOfType(button, Array)){
+				var FUCK:Array<String> = button;
+				var idArray:Array<MobileInputID> = [];
+				for(strId in FUCK)
+					idArray.push(MobileInputID.fromString(strId));
+				return luaTouchPad.anyJustReleased(idArray);
+			} else
+				return false;
+		}
+		return false;
+	}
 
 	override public function switchTo(nextState:Dynamic){
 		if(isPixelStage != stageData.isPixelStage)
