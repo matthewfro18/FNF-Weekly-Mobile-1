@@ -150,6 +150,14 @@ class EditorPlayState extends MusicBeatSubstate
 		noteTypeMap.clear();
 		noteTypeMap = null;
 
+		#if !android
+		addTouchPad('NONE', 'P');
+		addTouchPadCamera();
+		#end
+
+		addMobileControls();
+		mobileControls.instance.visible = true;
+
 		scoreTxt = new FlxText(10, FlxG.height - 50, FlxG.width - 20, "Hits: 0 | Misses: 0", 20);
 		scoreTxt.setFormat(Paths.font("vcr.ttf"), 20, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreTxt.scrollFactor.set();
@@ -341,7 +349,9 @@ class EditorPlayState extends MusicBeatSubstate
 
 	private function endSong() {
 		LoadingState.loadAndSwitchState(new meta.states.editors.ChartingState());
+		mobileControls.instance.visible = false;
 	}
+
 
 	public var noteKillOffset:Float = 350;
 	public var spawnTime:Float = 2000;
